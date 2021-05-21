@@ -201,7 +201,7 @@ class Video_Camera :
                     else :
                         match_histogram[name + "_false"] = match_histogram.get(name + "_false", 0) + 1
                         
-                        # I AM VERY AWARE THAT HAVING MORE THAN ONE VALUE IN A DICTIONARY LIKE THIS MAKES ME A PYTHON OUTLAW.
+                        # I AM VERY AWARE THAT HAVING MORE THAN ONE TYPE OF VALUE IN A DICTIONARY LIKE THIS MAKES ME A PYTHON OUTLAW.
                         # I did this because I wasn't sure what I wanted to call people the camera couldn't recognize. I still
                         # am somewhat indecisive about this, but I settled on "Unknown"
                         match_histogram[False] = match_histogram.get(False, 0) + 1
