@@ -1,0 +1,384 @@
+<!-- I am sorry, but I do not have too many comments on this HTML code -->
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1">
+
+        <!-- This stylesheet is used for icons on this page -->
+		<link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        
+        <!-- I am only including versions of the homescreen icon for iPhone models 6+ and after because 
+            I have an iPhone X -->
+		<link rel="icon" href="information/favicon.ico" type="image/x-icon">
+        <link rel="/apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"/>
+
+        <title>Max's Security Camera</title>
+
+
+        <!-- src="raw_video_feed" -->
+
+        <style>
+            body {
+                margin: 0px;
+                font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                color: #FFF;
+                background-color: black;
+            }
+            #noScript {
+                font-weight: 900;
+                font-size: 29;
+
+                color: black;
+                background-color: white;
+
+                border-radius: 12px;
+                border-color:rgb(27, 223, 223);
+                border-style: groove;
+                border-width: 8px;
+
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                right: 0;
+                left: 0;
+
+                padding: 20px;
+                margin: 30px;
+
+                text-align: center;
+            }
+            #bg {
+                background-image: url(" {{ url_for('getVideoFrame') }}");
+                background-size: cover;
+                background-position-x: center;
+                background-position-y: center;
+
+                width: 100%;
+                height: 100%;
+                padding: 0px;
+                margin: 0px;
+            }
+            #statusBar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+
+                padding: 15px;
+                margin: 0px;
+
+                background-color: rgba(112, 128, 144, 0.7);
+
+                font-size: 14px;
+                font-style: normal;
+
+                width: 100%;
+                
+                color: white;
+                font-weight: 900;
+
+                display: table;
+            }
+            #statusBar > h1 {
+                float: left;
+            }
+            #describer {
+                color: #191919;
+
+                font-weight: 400;
+                
+                font-size: 14px;
+
+                padding-left: 20px;
+                padding-right: 10px;
+            }
+            #optionsBlock {
+                color: black;
+                background-color: white;
+
+                border-radius: 12px;
+                border-color:rgb(27, 223, 223);
+                border-style: groove;
+                border-width: 8px;
+
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                right: 0;
+                left: 0;
+
+                padding: 20px;
+                margin: 30px;
+                margin-bottom: 90px;
+
+                overflow: auto;
+
+                text-align: center;
+
+                /* Switch to none*/
+                display: none;
+            }
+            #optionsTitle {
+                font-size: 35px;
+                margin-bottom: 25px;
+            }
+            button, .submitButton, #shutdownButton {
+                color: white;
+                background-color: rgb(72, 141, 211);
+
+                font-weight: 500;
+
+                border-style: none;
+                border-radius: 10px;
+
+                padding: 15px;
+
+                font-size: 22px;
+
+                transition-duration: 0.5s;
+                transition-timing-function: ease-in-out;
+            }
+
+            button.closeOptions {
+                display: inline-block;
+                position: absolute;
+                top: 0;
+                right: 0;
+
+                padding: 12px;
+                margin: 5px;
+
+                background-color: rgb(254, 12, 12);
+                transition-duration: 0.5s;
+            }
+            button.closeOptions:hover {
+                background-color: rgb(228, 55, 32);
+            }
+
+            button.settings {
+                color: white;
+                background-color: rgb(72, 141, 211);
+
+                border-style: none;
+                border-radius: 10px;
+                
+                font-size: 22px;
+
+                padding: 12px;
+                padding-left: 20px;
+                padding-right: 20px;
+                margin: 30px;
+                margin-bottom: 0px;
+                margin-top: 9px;
+            }
+            button.settings:hover {
+                background-color: royalblue;
+            }
+
+            #optionsSectionHeader {
+                font-size: 21px;
+            }
+            form > div > label {
+                font-size: 18px;
+                font-weight: 500;
+            }
+            input.rangeSlider {
+                background-color: red;
+                margin: 0;
+                margin-right: 7px;
+                margin-left: 7px;
+            }
+            form > div > h3 {
+                font-size: 18px;
+            }
+            form > div {
+                margin-bottom: 5px;
+
+                display: inline-block;
+            }
+            .submitButton {
+                padding: 15px;
+                font-size: 19px;
+            }
+            .submitButton:hover {
+                background-color: royalblue;
+            }
+            #shutdownButton {
+                margin: 20px;
+                font-size: 20px;
+
+                background-color: rgb(255, 81, 81);
+            }
+            #shutdownButton:hover {
+                background-color: rgb(255, 0, 0);
+            }
+        </style>
+    </head>
+    <body>
+        <div id="bg">
+            <section id="statusBar">
+                <h1 id="describer">Status:</h1>
+                <h1 id="statusDisplay">Loading</h1>
+
+                <h1 id="describer">Person:</h1>
+                <h1 id="personDisplay">Loading</h1>
+
+                <h1 id="describer">Positivity:</h1>
+                <h1 id="positivityDisplay">Loading</h1>
+
+                <button class="settings" onclick="showOptions()">
+                    <i class="fa fa-gear"></i> Options</button>
+            </section>
+        </div>
+
+        <div id="optionsBlock">
+            <button onclick="closeOptions()" class="closeOptions">
+                <i class="fa fa-close"></i></button>
+            <h1 id="optionsTitle">Options Here</h1>
+            <hr>
+
+            <!-- Person Log Section -->
+            <section>
+                <h2 id="optionsSectionHeader">View Person Log</h2>
+                <div style="display: inline-block;">
+                    <a href="/information/personLog" target="_blank">
+                        <button class="submitButton" style="font-size: 16px;">View Person Log</button>
+                    </a>
+                    <form action="/information/personLog/clear" method="POST" style="display: inline-block;">
+                        <input type="submit" class="submitButton" style="font-size: 16px; margin-top: 5px;"
+                            value="Clear Log"/>
+                    </form>
+                </div>
+            </section>
+            <br>
+
+            <!-- Change Settings Section -->
+            <hr>
+            <section id="changeSettingsSection">
+                <h2 id="optionsSectionHeader">Change Advanced Settings</h2>
+                
+                <!-- Messy Form Data -->
+                <form action="/information/settings/update" method="POST">
+                    <hr style="width: 50%;">
+                    <h3>Lower is stricter</h3>
+                    <!-- Divs are sections for each pair of inputs -->
+                    <div>
+                        <label for="recTol" id="recTol"
+                            title="Percentage of how close a face should be to a known face for a 'match'">
+                            Facial Recognition Tolerance: 0 </label>
+                        <input name="recTol" class="rangeSlider" type="range" min="0" max="1" step="0.05" id="recTolSlider"
+                        value="0"
+                        oninput="setRangeValue('recTol', 'Facial Recognition Tolerance:', this.value);"/>
+                    </div>
+                    <br>
+                    <div>
+                        <label for="imgDiffTol" id="imgDiffTol"
+                            title="How much difference between two consecutive camera frames the program will accept as a person (safe guard)">
+                            Tolerance Between Two Frames: 0 </label>
+                        <input name="imgDiffTol" class="rangeSlider" type="range" min="0" max="1" step="0.05"
+                        value="0" id="imgDiffTolSlider"
+                        oninput="setRangeValue('imgDiffTol', 'Tolerance Between Two Frames:', this.value);"/>
+                    </div>
+                    <br>
+                    <hr style="width: 50%;">
+                    <h3>Higher is stricter</h3>
+                    <div>
+                        <label for="minPerc" id="minPerc"
+                        title="Percentage of how many most repeating matches there must be to determine whether a match is ruled as 'Unknown'">
+                        Minimum Percentage of Positive Queries: 0 </label>
+                        <input name="minPerc" class="rangeSlider" type="range" min="0" max="1" step="0.05"
+                        value="0" id="minPercSlider"
+                        oninput="setRangeValue('minPerc', 'Minimum Percentage of Positive Queries:', this.value);"/>
+                    </div>
+                    <br>
+                    <div>
+                        <label for="certTol" id="certTol"
+                        title="Percentage of how many 'matches' should be made before ruling a face as a possible match">
+                        Certification Tolerance: 0 </label>
+                        <input name="certTol" class="rangeSlider" type="range" min="0" max="1" step="0.05" id="certTolSlider"
+                        value="0"
+                        oninput="setRangeValue('certTol', 'Certification Tolerance:', this.value);"/>
+                    </div>
+                    <br>
+                    <div>
+                        <label for="confirmTime" id="confirmTime"
+                            title="How much time (in seconds) to wait before definitely ruling a match">
+                            Confirmation Time: 0 </label>
+                        <input name="confirmTime" class="rangeSlider" type="range" min="0" max="10" step="0.5"
+                        id="confirmTimeSlider" value="0"
+                        oninput="setRangeValue('confirmTime', 'Confirmation Time:', this.value);"/>
+                    </div>
+                    <br>
+                    <br>
+                    <input class="submitButton" type="submit" value="Save Settings"></input>
+                </form>
+            </section>
+            <br>
+            
+            <!-- Shutdown Camera Section -->
+            <hr style="width: 100%;">
+            <section>
+                <h2 id="optionsSectionHeader">Shutdown Camera</h2>
+                <form action="/information/shutdown" method="POST" enctype="multipart/form-data">
+                    <div>
+                        <label for="user" id="usernameLogin">Username: </label>
+                        <input name="user" type="text"></input>
+                    </div>
+                    <br>
+                    <div>
+                        <label for="password" id="passwordLogin">Password: </label>
+                        <input name="password" type="password"></input>
+                    </div>
+                    <br>
+                    <input type="Submit" value="Shutdown" id="shutdownButton"
+                        onclick="alert('Camera will turn itself off in 60 seconds')"/>
+                </form>
+            </section>
+        </div>
+        
+        <!-- Settings retriever -->
+        <script type="text/javascript" src="/information/JSCode/retrieveSettings.js">
+        </script>
+
+        <!-- JS Code Script used for Status Poller, basic functions, and calling settings function -->
+        <script type="text/javascript">
+            getSettings();
+
+            function showOptions () {
+                document.getElementById("optionsBlock").style.display = "block";
+            }
+            function closeOptions () {
+                document.getElementById("optionsBlock").style.display = "none";
+            }
+
+            var w = new Worker("/information/JSCode/poller.js")
+            var data = {}
+
+            // Message event for Status Poller
+            w.onmessage = function (event) {
+                if (typeof event.data != "string") {
+                    data = event.data;
+                    
+                    document.getElementById("statusDisplay").innerText = data.Status;
+                    document.getElementById("positivityDisplay").innerText = Math.trunc(data.Positivity * 1000) / 10 + "%";
+
+                    if (data.Person != false && data.Person != null) {
+                        document.getElementById("personDisplay").innerText = data.Person;
+                    }
+                    else if (data.Person == null) {
+                        document.getElementById("personDisplay").innerText = "None";
+                    }
+                    else if (data.Person == false) {
+                        document.getElementById("personDisplay").innerText = "Unknown";
+                    }
+                }
+            }
+        </script>
+
+        <noscript id="noScript">
+            <h1>Please Allow This Website To Run JavaScript For This Website To Function Properly</h1>
+        </noscript>
+    </body>
+</html>
+
+
