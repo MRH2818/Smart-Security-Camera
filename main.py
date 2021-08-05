@@ -1,21 +1,11 @@
 # Importing modules
 
-# Manages camera
 import video_camera as vc
-
-# Sends email notifications
-from email_sender import send_email_message, send_url_message
-
-# For file reading
+from email_sender import send_email_message
 import os
-
-# For mulithreading
+import json
 import threading
-
-# For the Flask webserver
 from flask import Flask, render_template, Response, jsonify, send_from_directory, request, redirect, make_response
-
-# For CSV file manipulation
 import pandas as pd
 
 # Initalize Flask app
@@ -33,13 +23,13 @@ if (os.path.exists(os.path.join(app.root_path, "Data", "settings.csv"))) :
 
 else :
     # If there isn't a settings CSV file, load settings
-    defaultSettings = { "recTolerance" : [0.55],
+    default_settings = { "recTolerance" : [0.55],
         "certifyTolerance" : [0.4],
         "imageDifferenceTol" : [0.1],
         "minPercOfPosImgs" : [0.2],
         "confirmationTime" : [5] }
 
-    settings_data_frame = pd.DataFrame(defaultSettings);
+    settings_data_frame = pd.DataFrame(default_settings)
     settings_data_frame.to_csv(os.path.join(app.root_path, "Data", "settings.csv"))
 
 # Initialize global variables. The constructor for the Video_Camera class will familiarize faces, which can take a while
@@ -123,27 +113,31 @@ print("Thread initiated")
 
 
 # My absolutely terrible encryption thing. It basically just combines all of the string's characters into one. I thought it would be fun to make my own instead of using a SHA algorithm
-def quick_encrypt (string_to_encrypt) :
+def quick_encrypt (s) :
     ch = 0
-    for character in string_to_encrypt :
+    for character in s :
         ch += ord(character)
     return chr(ch)
 
 
 # Events for Flask app
 @app.route("/", methods=["GET"])
-def getWebPage () :
+def get_web_page () :
     # Checks a cookie. If cookie is bad, redirect the webpage to the login form
     if (request.cookies.get("userId") != quick_encrypt(username)) :
         return redirect("/appLogin")
     return render_template("template.html")
 
 
-# Login form details. If I were to further develop this, I would use environment variables instead,
-# but I hacked toghether this system in less than a day. Please excuse this, I had a lot of schoolwork.
+# Load login form details
+config_data = open(os.path.join("Data", "config.json"), "r")
+file_text = "".join(config_data.readlines())
+config_data.close()
 
-username = "TerribleUsername"
-password = "AtrociousPassword"
+config = json.loads(file_text)
+
+username = config["login_user"]
+password = config["login_pass"]
 
 # App login
 @app.route("/appLogin", methods=["GET"])
@@ -152,24 +146,24 @@ def get_login_form () :
 
 # Login form
 @app.route("/requests/login", methods=["POST"])
-def handle_login_information() :
-    # Delay to discourage brute-forcing attacks. I figured that when random people on the internet decide to
-    # hack a 13-year-old's personal project, they will get bored when they have to wait for longer.
+def handle_login_info() :
+    # Delay to discourage brute-forcing attacks
     vc.time.sleep(5)
 
     # Checks form data recieved.
     if (request.form["password"] == password and request.form["user"] == username) :
         resp = make_response(redirect("/"))
 
-        # Sets a familiar cookie on the user's web browser so I don't have to login every single time I want to access the webpage.
+        # Sets a familiar cookie on the user's web browser
         resp.set_cookie("userId", quick_encrypt(username))
         return resp
+
     else :
         return redirect("/appLogin")
 
 # Shutdown camera post request handler
 @app.route("/information/shutdown", methods=["POST"])
-def handle_shutdown_request() :
+def handle_shutdown() :
     # Checks username and password
     if (request.form["password"] == password and request.form["user"] == username) :
         # Stops managingGuards function
@@ -191,8 +185,8 @@ def view_person_log() :
     resp = None
     try :
         # render_template function doesn't always update when the file is cleared, so this is my alternative
-        html_log = open(person_html_log_file_path, "r")
-        text = html_log.read()
+        htmlLog = open(person_html_log_file_path, "r")
+        text = htmlLog.read()
         resp = text
     except :
         resp = "<h1>Error 500</h1><h2>Can't Retrieve Person Log</h2>"
@@ -202,27 +196,21 @@ def view_person_log() :
 def clear_person_log() :
     print ("Cleared log")
 
-
-    fileData = open(person_html_log_file_path, "w")
-    fileData.write("<h1>This is empty.</h1>")
-    fileData.close()
+    file_data = open(person_html_log_file_path, "w")
+    file_data.write("<h1>This is empty.</h1>")
+    file_data.close()
 
     # Deletes person log file
     os.remove(person_log_file_path)
 
     return redirect("/")
 
-
 # Generator to get camera data
 def frame_gen(camera) :
     while True :
         # We need to format the camera frame this special way before we compile them into multi-image media format for the room's livestream
-        jpg_frame_format = camera.getFrame()
-        yield (b'--frame\r\n' + b'Content-Type: image/jpg\r\n\r\n' + jpg_frame_format + b'\r\n\r\n')
-
-
-"""while True :
-    print(next(frameGen(Video_Camera(0)))[1])"""
+        jpgFrameFormat = camera.getFrame()
+        yield (b'--frame\r\n' + b'Content-Type: image/jpg\r\n\r\n' + jpgFrameFormat + b'\r\n\r\n')
 
 # Livestream for room
 @app.route("/information/raw_video_feed", methods=["GET"])
@@ -253,17 +241,18 @@ def get_favicon() :
 
 # These icons must be in the root folder for Apple's Safari add-to-homescreen feature
 @app.route("/apple-touch-icon.png", methods=["GET"])
-def get_apple_home_screen_icon_for_iphone_x () :
+def get_apple_home_screen_icon_for_iPhone_X () :
     return send_from_directory(os.path.join(app.root_path, "templates"), 'WebsiteIcon_iPhoneX.png', mimetype="image/png")
 
 @app.route("/apple-touch-icon-120x120.png")
-def get_apple_home_screen_icon_for_120_120px () :
+def get_apple_home_screen_icon_for_120x120 () :
     return send_from_directory(os.path.join(app.root_path, "templates"), 'WebsiteIcon_120x120.png', mimetype="image/png")
 
 # Update facial recognition settings from client
 @app.route("/information/settings/update", methods=["POST"])
 def update_settings () :
     print(request.form.to_dict())
+
     global sec_camera
 
     sec_camera.rec_tolerance = float(request.form["recTol"]);
@@ -295,18 +284,6 @@ def get_settings () :
     return jsonify(settings)
 
 
-# On my Raspberry Pi, I have extra code here that establishes an ngrok connection for
-# port 5000, and sends me an email containing its tunnel URL. I used this so I can
-# access my camera from anywhere on the internet.
-
-# from pyngrok import ngrok
-
-# try :
-#   url = ngrok.connect(5000).public_url
-#   send_url_message(url)
-# except :
-#   print ("Error establishing ngrok")
-
 if (__name__ == "__main__") :
-    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader = False)
+    app.run(host="0.0.0.0", port=8080, debug=False, use_reloader = False)
 
