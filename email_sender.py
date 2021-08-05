@@ -7,7 +7,7 @@ def send_email_message (file_path, person_name, image_type="jpeg", image_file_na
 
     message["Subject"] = "Alert From Your Security Camera"
     message["From"] = "TerribleUsername01@gmail.com"
-    message["To"] = "TerribleUsername00@ucc.on.ca"
+    message["To"] = "TerribleUsername00@yahoo.com"
 
     message.set_content(f'Dear Max,\n\n{person_name} has entered your room. Please do not worry, this incident has been logged.\n\nUntil next time,\nMax\'s Security Camera')
 
