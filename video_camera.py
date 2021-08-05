@@ -15,7 +15,7 @@ import json
 
 from numpy.lib.function_base import average
 
-global_known_faces_dir = "C:\\Users\\codr9\\OneDrive\\Desktop\\Coding files\\Python\\Projects\\Security Camera\\known_faces"
+global_known_faces_dir = "known_faces"
 
 class Video_Camera :
     # Class constructor
@@ -28,7 +28,7 @@ class Video_Camera :
         #Instantiating variables
         self.known_faces_dir = global_known_faces_dir
         
-        self.error_message = cv2.imread("C:\\Users\\codr9\\OneDrive\\Desktop\\Coding files\\Python\\Projects\\Security Camera\\ErrorImage.jpeg")
+        self.error_message = cv2.imread("ErrorImage.jpeg")
 
         # List of dictionaries designed like so:
         # [{"PersonName" : [LIST_OF_FACE_ENCODINGS]}]
