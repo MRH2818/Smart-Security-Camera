@@ -1,0 +1,9 @@
+{
+    "login_user" : "TerribleUsername",
+    "login_pass" : "AtrociousPassword",
+    "email_sender" : "TerribleUsername01@gmail.com",
+    "email_sender_pass" : "AtrociousPassword",
+    "email_recipient" : "TerribleUsername02@gmail.com",
+    "email_network_smtp_address" : "smtp.gmail.com",
+    "email_network_port" : 465
+}
