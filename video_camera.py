@@ -15,12 +15,11 @@ import json
 
 from numpy.lib.function_base import average
 
-# On my Raspberry Pi, 
-global_known_faces_dir = "known_faces"
+global_known_faces_dir = "C:\\Users\\codr9\\OneDrive\\Desktop\\Coding files\\Python\\Projects\\Security Camera\\known_faces"
 
 class Video_Camera :
     # Class constructor
-    def __init__ (self, camera_num, pre_known_faces = [], pre_safe_names = [], settings = { "recTolerance" : 0.55,
+    def __init__ (self, cameraNum, preKnownFaces = [], preSafeNames = [], settings = { "recTolerance" : 0.55,
         "certifyTolerance" : 0.4,
         "imageDifferenceTol" : 0.1,
         "minPercOfPosImgs" : 0.2,
@@ -29,17 +28,17 @@ class Video_Camera :
         #Instantiating variables
         self.known_faces_dir = global_known_faces_dir
         
-        self.error_message = cv2.imread("ErrorImage.jpeg")
+        self.error_message = cv2.imread("C:\\Users\\codr9\\OneDrive\\Desktop\\Coding files\\Python\\Projects\\Security Camera\\ErrorImage.jpeg")
 
         # List of dictionaries designed like so:
         # [{"PersonName" : [LIST_OF_FACE_ENCODINGS]}]
-        self.known_faces = pre_known_faces
+        self.known_faces = preKnownFaces
         
         # Is a list of people that are considered "safe"
-        self.safe_names = pre_safe_names
+        self.safe_names = preSafeNames
 
         # Retrieves frames from camera
-        self.video = cv2.VideoCapture(camera_num)
+        self.video = cv2.VideoCapture(cameraNum)
 
         # Keeps track of current frames
         self.current_image = self.video.read()[1]
@@ -62,16 +61,16 @@ class Video_Camera :
         self.certify_tolerance = settings["certifyTolerance"]
 
         if (self.known_faces == []) :
-            self.loadFaces()
+            self.load_faces()
         if (self.safe_names == []) :
-            self.loadNames()
+            self.load_names()
 
     def __del__ (self) :
         self.video.release()
         print("Video Released")
 
     # Load faces
-    def loadFaces (self) :
+    def load_faces (self) :
         counter = 0
         for name in os.listdir(self.known_faces_dir) :
         
@@ -87,10 +86,10 @@ class Video_Camera :
             self.known_faces.append({name : []})
 
             # Loops through known faces folder
-            for profile in os.listdir(f"{self.known_faces_dir}\\{name}") :
+            for profile in os.listdir(os.path.join(self.known_faces_dir, name)) :
                 print(profile)
 
-                image = face_recognition.load_image_file(f"{self.known_faces_dir}\\{name}\\{profile}")
+                image = face_recognition.load_image_file(os.path.join(self.known_faces_dir, name, profile))
                 prof_encodings = face_recognition.face_encodings(image)
 
                 if (prof_encodings == []) :
@@ -111,20 +110,20 @@ class Video_Camera :
             counter += 1
 
     # Load authorized names
-    def loadNames (self) :
+    def load_names (self) :
         #try :
         # Loops through known faces folder
         for file in os.listdir(self.known_faces_dir) :
             if (file.endswith(".json") == True) :
-                fileData = open(os.path.join(self.known_faces_dir, file), "r")
-                fileText = "".join(fileData.readlines())
+                file_data = open(os.path.join(self.known_faces_dir, file), "r")
+                file_text = "".join(file_data.readlines())
 
-                fileData.close()
+                file_data.close()
 
-                personData = json.loads(fileText)
+                person_data = json.loads(file_text)
 
-                if (personData["auth"] == "safe") :
-                    self.safe_names.append(personData["name"])
+                if (person_data["auth"] == "safe") :
+                    self.safe_names.append(person_data["name"])
 
         #except :
             #print("Error loading names")
@@ -156,11 +155,11 @@ class Video_Camera :
 
         self.current_image = new_frame
 
-        diffRatio = (difference_full_pix_avg / frame_full_pix_average)
-        diffRatioSum = (diffRatio)
+        diff_ration = (difference_full_pix_avg / frame_full_pix_average)
+        diff_ratio_sum = diff_ration
 
         # Will be calculated at the end of this loop
-        averageDiffRatio = 0
+        avg_diff_ratio = 0
 
         #Starting the timer
         start = time.time()
@@ -171,7 +170,7 @@ class Video_Camera :
 
             bdif, gdif, rdif = cv2.split(cv2.subtract(new_frame, self.current_image))
             difference_full_pix_avg = (cv2.countNonZero(bdif) + cv2.countNonZero(gdif) + cv2.countNonZero(rdif)) / 3
-            diffRatio = (difference_full_pix_avg / frame_full_pix_average)
+            diff_ration = (difference_full_pix_avg / frame_full_pix_average)
 
             self.current_image = new_frame
             encodings = face_recognition.face_encodings(self.current_image)
@@ -187,98 +186,98 @@ class Video_Camera :
                 #counter = 0
 
                 #print (self.knownFaces[counter])
-                for facePair in self.known_faces :
+                for face_pair in self.known_faces :
                     #print(facePair)
-                    name = list(facePair.keys())[0]
-                    person_encodings = list(facePair.values())[0]
+                    name = list(face_pair.keys())[0]
+                    person_encodings = list(face_pair.values())[0]
                     
                     results = face_recognition.compare_faces(person_encodings, face_encoding, tolerance=self.rec_tolerance)
                     
-                    if (self.certifyResult(results)) :
+                    if (self.certify_result(results)) :
                         #Log the match into the histogram
                         match_histogram[name] = match_histogram.get(name, 0) + 1
 
                     else :
                         match_histogram[name + "_false"] = match_histogram.get(name + "_false", 0) + 1
                         
-                        # I AM VERY AWARE THAT HAVING MORE THAN ONE TYPE OF VALUE IN A DICTIONARY LIKE THIS MAKES ME A PYTHON OUTLAW.
+                        # I AM VERY AWARE THAT HAVING MORE THAN ONE VALUE IN A DICTIONARY LIKE THIS MAKES ME A PYTHON OUTLAW.
                         # I did this because I wasn't sure what I wanted to call people the camera couldn't recognize. I still
                         # am somewhat indecisive about this, but I settled on "Unknown"
                         match_histogram[False] = match_histogram.get(False, 0) + 1
                     #counter += 1
         
-        potentialPerson = self.getCommonGuy(match_histogram)
+        potential_person = self.get_common_guy(match_histogram)
 
-        if (potentialPerson["name"] == True) :
+        if (potential_person["name"] == True) :
             # print("No matches!!")
             # Check if frame is drastically different, because there may be a person moving
             # print(tempratio)
-            if (diffRatio > self.image_difference_tolerance) :
-                return {"Status" : "Breached", "Person" : "Unknown", "Positivity" : (1 - diffRatio)}
-            return {"Status" : "Safe", "Person" : None, "Positivity" : potentialPerson["positivity"]}
+            if (diff_ration > self.image_difference_tolerance) :
+                return {"Status" : "Breached", "Person" : "Unknown", "Positivity" : (1 - diff_ration)}
+            return {"Status" : "Safe", "Person" : None, "Positivity" : potential_person["positivity"]}
 
-        if (potentialPerson["name"] == False) :
+        if (potential_person["name"] == False) :
             #print("UNKNOWN")
-            return {"Status" : "Breached", "Person" : "Unknown", "Positivity" : potentialPerson["positivity"]}
+            return {"Status" : "Breached", "Person" : "Unknown", "Positivity" : potential_person["positivity"]}
 
         # Person is detected
         # Check if person is authorized
         status = "Breached"
 
-        if (potentialPerson["name"] in self.safe_names) :
+        if (potential_person["name"] in self.safe_names) :
             status = "Safe"
 
-        return {"Status" : status, "Person" : potentialPerson["name"], "Positivity" : potentialPerson["positivity"]}
+        return {"Status" : status, "Person" : potential_person["name"], "Positivity" : potential_person["positivity"]}
     
 
     # Results is a list of booleans
     # This function decides whether there are enough True values in the results list to rule the face
     # as a match before it moves onto other security features.
-    def certifyResult(self, results) :
+    def certify_result(self, results) :
         length = len(results)
-        goodResults = 0
+        good_results = 0
 
         for result in results :
             if (result == True) :
-                goodResults += 1
-                if (goodResults / length >= self.certify_tolerance) :
+                good_results += 1
+                if (good_results / length >= self.certify_tolerance) :
                     return True
 
         return False
 
     # Looks at the results from the histogram dictionary and chooses the highest value
-    def getCommonGuy(self, resultHistogram) :
-        if (resultHistogram == {}) :
+    def get_common_guy(self, result_histogram) :
+        if (result_histogram == {}) :
             # Name is equal to true if there are no results
             return {"positivity" : 1, "name" : True}
 
         # print(resultHistogram)
 
-        largestRecurence = 0
-        positivePersonName = 0
-        totalRecurences = 0
+        largest_recurence = 0
+        positive_person_name = 0
+        total_recurences = 0
 
-        for name, recurences in resultHistogram.items() :
+        for name, recurences in result_histogram.items() :
             if (type(name) != type(bool(True))) :
                 if (name.endswith("_false")) :
                     continue
 
-            totalRecurences += recurences
+            total_recurences += recurences
 
-            if (recurences > largestRecurence) :
-                positivePersonName = name
-                largestRecurence = recurences
+            if (recurences > largest_recurence) :
+                positive_person_name = name
+                largest_recurence = recurences
             
         
-        if (positivePersonName != False) :
-            positivityRatio = 1 - (resultHistogram.get(positivePersonName + "_false", 0) / largestRecurence)
-            if (positivityRatio > self.min_perc_of_pos_images) :
-                return {"positivity" : positivityRatio, "name" : positivePersonName}
+        if (positive_person_name != False) :
+            positivity_ratio = 1 - (result_histogram.get(positive_person_name + "_false", 0) / largest_recurence)
+            if (positivity_ratio > self.min_perc_of_pos_images) :
+                return {"positivity" : positivity_ratio, "name" : positive_person_name}
         
-        return { "positivity" : (largestRecurence / totalRecurences), "name" : False }
+        return { "positivity" : (largest_recurence / total_recurences), "name" : False }
     
     
-    def getFrame(self) :
+    def get_frame(self) :
         frame = self.video.read()[1]
         
         # Checks if frame is empty, meaning that there was some sort of error retrieving the camera frame
